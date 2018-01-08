@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Productivity</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS for application -->
+    <link href="css/style.css" rel="stylesheet">
+    
+  </head>
+
+  <body onload="load()">
+
+    <div class="container">
+      <header class="header clearfix">
+        <nav>
+        </nav>
+        <h3 class="text-muted">Productivity</h3>
+      </header>
+
+      <main role="main">
+
+        <div class="jumbotron">
+            <h1 class="display-4 tagline" id="top_header">Keep Track of Time</h1>
+            <div id="current_task">
+                <h1 class="display-5" id="task">No Task</h1>
+                <h1 class="display-3" id="time">00h 00m 00s</h1>
+            </div>
+            <form id="myform">
+                <div class="input-group">
+                    <button class="btn btn-success samewidth" type="button" onclick="buttonPress('task')" id="btntask">Start Task</button>
+                    <input type="text" id="taskname" class="form-control" placeholder="Task name">
+                </div>
+                <div class="input-group">
+                    <button class="btn btn-danger samewidth" type="button" onclick="buttonPress('break')" id="btnbreak">Start Break</button>
+                    <input type="text" id="breakname" class="form-control" placeholder="Break name">
+                </div>
+            </form>
+            
+        </div>
+          
+        
+
+          
+            <h3 class="display-6">Recent Days</h3>
+            <div id="recentdays"></div>
+          
+
+
+      </main>
+        
+
+      <footer class="footer">
+        <p>&copy; Briney 2018</p>
+      </footer>
+
+    </div> <!-- /container -->
+    <!-- copied from jquery cdn. required for bootstrap --> 
+    <script
+          src="https://code.jquery.com/jquery-3.2.1.js"
+          integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+          crossorigin="anonymous"></script>
+    <!-- bootstrap -->
+    <script src="js/bootstrap.min.js"></script>
+    <!-- our own js -->
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+      
+  </body>
+</html>
