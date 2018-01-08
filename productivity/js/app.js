@@ -27,6 +27,7 @@ function buttonPress(which) {
     } else {
         endTask()
     }
+    displayRecent()
 }
 
 //==========================================================================
@@ -279,21 +280,27 @@ class Day{
             var start = new Date(task.start_time)
             var diff = start - curr_time
             if (diff > RESOLUTION) {
-                result += "<div class='progress-bar bg-white' "
+                result += "<div class='progress-bar bg-progress' "
                 result += "style='width:" + Day.diffToPercent(diff) + "'>"
                 result += "</div>"
             }
             // use the actual duration of the task
             var end = new Date(task.end_time)
             diff = end - start
+            var timestring = start.toLocaleTimeString() + ' to ' + end.toLocaleTimeString()
+            var duration = formatTime(task.duration)
             result += "<div class='progress-bar bg-"
-            result += (task.kind === "task" ? "success' " : "danger' ")
-            result += "style='width:" + Day.diffToPercent(diff) + "'"
-            result += 
-                "onmouseenter='mouseenterTask(" +'"'+ task.name + '","' + this.datestr + '"' + ")'"
-            result +=
-                "onmouseleave='mouseleaveTask(" +'"'+ this.datestr + '"'+ ")'" 
-            result += ">"
+                result += (task.kind === "task" ? "success' " : "danger' ")
+                result += "style='width:" + Day.diffToPercent(diff) + "'"
+                result += "onmouseenter='mouseenterTask(" + '"'
+                    result += task.name + '","' 
+                    result += task.kind + '","' 
+                    result += timestring + '","' 
+                    result += duration + '","' 
+                    result += this.datestr + '"' + ")'"
+                result += "onmouseleave='mouseleaveTask(" 
+                    result += '"'+ this.datestr + '"'+ ")'" 
+                result += ">"
             result += "</div>"
             curr_time = end
         }
@@ -305,9 +312,13 @@ class Day{
     }
 }
 
-function mouseenterTask(name, divid) {
+function mouseenterTask(name, kind, timestring, duration, divid) {
     var namediv = document.getElementById(divid)
-    namediv.innerHTML = "<strong>" + name + "</strong>"
+    var entry =  "<div class='text-" + (kind==="task"?"success":"danger") + "'>"
+    entry += "<strong>" + name + "</strong></div>"
+    entry += "<div><strong>Time:</strong> " + timestring + "</div>"
+    entry += "<div><strong>Duration:</strong> " + duration + "</div>"
+    namediv.innerHTML = entry
 }
 
 function mouseleaveTask(divid) {

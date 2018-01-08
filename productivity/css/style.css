@@ -102,3 +102,7 @@ body {
 .tagline {
     margin-bottom: 2rem;
 }
+
+.bg-progress {
+    background-color: #e9ecef !important;
+}
