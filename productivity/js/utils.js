@@ -51,3 +51,38 @@ function getDayName(number) {
     var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     return days[number]
 }
+
+
+function changeFavicon(src) {
+    var link = document.createElement('link'),
+    oldLink = document.getElementById('dynamic-favicon');
+    link.id = 'dynamic-favicon';
+    link.rel = 'icon';
+    link.href = src;
+    if (oldLink) {
+        document.head.removeChild(oldLink);
+    }
+    document.head.appendChild(link);
+}
+
+function loadSessions() {
+    var string_sessions = localStorage.getItem("sessions")
+    if (string_sessions === null) {
+        console.log("no previous sessions")
+        return
+    }
+    var sessions = JSON.parse(string_sessions)
+    for (var i = 1; i < sessions.length; i++) {
+        var day = sessions[i]
+        Object.setPrototypeOf(day, Day.prototype)  
+        for (var j = 1; j < day.tasks.length; j++) {
+            var task = day.tasks[j]
+            Object.setPrototypeOf(task, Task.prototype)
+        }
+    }
+    return sessions
+}
+
+function capitalize(word) {
+    return word.slice(0,1).toUpperCase() + word.slice(1)
+}

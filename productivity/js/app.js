@@ -5,111 +5,60 @@ var colors = {
     success: "#28a745",
     warning: "#ffc107",
     danger: "#dc3545",
+    info: "#17a2b8",
     black: "#000000"
 }
 
+var favicons = {
+    success: "gear_green.ico",
+    warning: "gear_yellow.ico",
+    danger: "gear_red.ico",
+    info: "gear_blue.ico",
+    normal: "favicon.ico"
+}
+
+var amount_recent_to_show = 7
 var DEFAULT_TASK = document.getElementById("task").innerHTML
 var start_time = new Date()
 var timer
 var timer_ongoing = false
 var current_task
+var RESOLUTION = 86400 * 1000 * 0.000 // 0.5 percent of each day, which has 86400 seconds
+
 
 //==========================================================================
-//  BUTTON FUNCTIONS
+//  LOAD
 
-function buttonPress(which) {
+
+function load() {
+    new TaskKind("task",colors.success,"Working")
+    new TaskKind("break",colors.danger,"Taking a Break")
+    new TaskKind("research",colors.info,"Researching")
+    new TaskKind("other",colors.warning,"Other")
+    TaskKind.createForm()
+    displayRecent(amount_recent_to_show)
+}
+
+
+//==========================================================================
+//  MAIN CONTROL
+
+function buttonPress(kind) {
     if(!timer_ongoing) {
-        if(which === "task") {
-            startTask()
-        } else {
-            startBreak()
-        }
+        var title = document.getElementById(kind + "name").value
+        startTimer()    // sets timer_ongoing
+        current_task = new Task(title, kind, start_time)
+        current_task.begin()
+        changeFavicon(favicons[TaskKind.getByName(kind).getColor()])
     } else {
-        endTask()
+        clearTimer()    // clears timer_ongoing as well
+        current_task.end()
+        saveTask(current_task)
+        current_task = null
+        changeFavicon("favicon.ico")
     }
-    displayRecent()
+    displayRecent(amount_recent_to_show)
 }
-
-//==========================================================================
-//  TASK CONTROL
-
-function startTask() {
-    var taskname = document.getElementById("taskname").value
-    var tasktext = document.getElementById("task")
-    var timetext = document.getElementById("time")
-    if(taskname === ""){
-        taskname = "Working"
-    }
-    tasktext.innerHTML = taskname
-    setColor("time", colors.success)
-    
-    // change button text
-    document.getElementById("btntask").innerHTML = "End Task"
-    document.getElementById("btnbreak").innerHTML = "Start Break"
-    
-    toggleVisibility("taskname")
-    toggleVisibility("btnbreak")
-    toggleVisibility("breakname")
-    
-    current_task =  new Task(taskname, "task")
-    
-    startTimer()
-}
-
-function startBreak() {
-    var taskname = document.getElementById("breakname").value
-    var tasktext = document.getElementById("task")
-    var timetext = document.getElementById("time")
-    if(taskname === ""){
-        taskname = "Taking a break"
-    }
-    tasktext.innerHTML = taskname
-    setColor("time", colors.danger)
-    
-    // change button text
-    document.getElementById("btntask").innerHTML = "Start Task"
-    document.getElementById("btnbreak").innerHTML = "End Break"
-    
-    toggleVisibility("taskname")
-    toggleVisibility("btntask")
-    toggleVisibility("breakname")
-    
-    current_task = new Task(taskname, "break")
-    
-    startTimer()
-}
-
-function endTask() {
-    endCurrentTask()
-    clearTimer()
-    setVisibility("taskname", true)
-    setVisibility("breakname", true)
-    setVisibility("btntask", true)
-    setVisibility("btnbreak", true)
-    document.getElementById("btntask").innerHTML = "Start Task"
-    document.getElementById("btnbreak").innerHTML = "Start Break"
-    var tasktext = document.getElementById("task").innerHTML = DEFAULT_TASK
-    setColor("time", colors.black)
-}
-
-function Task(name, kind) {
-    this.name = name
-    this.kind = kind
-    this.start_time = start_time
-    this.end_time = null
-    this.duration = 0
-    this.ongoing = true
-}
-
-function endCurrentTask() {
-    var end_time = new Date()
-    current_task.end_time = end_time
-    current_task.ongoing = false
-    current_task.duration = end_time - start_time
-    saveTask(current_task)
-    current_task = null
-}
-
 
 //==========================================================================
 //  TIMER
@@ -150,16 +99,6 @@ function formatTime(ms) {
     
     return hours_d + "h " + minutes_d + "m " + seconds_d + "s"
 }
-
-
-//==========================================================================
-//  LOAD
-
-
-function load() {
-    displayRecent(7)
-}
-
 
 //==========================================================================
 //  SAVE AND RETRIEVE DATA
@@ -216,17 +155,6 @@ function displayRecent(amt) {
         var entry = '<div class="card card-body bg-light">'
         entry += '<h3>' + toPrettyDate(day.datestr) + '</h3>'
         entry += day.createProgressBar()
-        /*
-        for (var j = day.tasks.length-1; j > -1; j--) {
-            var task = day.tasks[j]
-            var start_t = new Date(day.tasks[j].start_time)
-            entry += "<div class='card card-body bg-gray'>"
-            entry += "<div>" + task.name + "</div>"
-            entry += "<div>" + task.kind + "</div>"
-            entry += "<div>" + start_t.toLocaleTimeString() + "</div>"
-            entry += "<div>" + formatTime(task.duration) + "</div>"
-            entry += "</div>"
-        }*/
         entry += '<div id="' + day.datestr + '"> </div>'
         entry += '</div>'
         
@@ -240,7 +168,6 @@ function displayRecent(amt) {
 
 //==========================================================================
 //  DAY OBJECT
-var RESOLUTION = 86400 * 1000 * 0.005 // 0.5 percent of each day, which has 86400 seconds
 class Day{
     constructor(datestr) {
         this.datestr = datestr
@@ -276,6 +203,9 @@ class Day{
         
         for (var i = 0; i < this.tasks.length; i++) {
             var task = this.tasks[i]
+            var kind = TaskKind.getByName(task.kind)
+            console.log(kind)
+            console.log(kind.getColor())
             // get the time from curr_time to task time
             var start = new Date(task.start_time)
             var diff = start - curr_time
@@ -290,17 +220,18 @@ class Day{
             var timestring = start.toLocaleTimeString() + ' to ' + end.toLocaleTimeString()
             var duration = formatTime(task.duration)
             result += "<div class='progress-bar bg-"
-                result += (task.kind === "task" ? "success' " : "danger' ")
-                result += "style='width:" + Day.diffToPercent(diff) + "'"
+                result += kind.getColor() + "' "
+                result += "style='width:" + Day.diffToPercent(task.duration) + "'"
                 result += "onmouseenter='mouseenterTask(" + '"'
                     result += task.name + '","' 
-                    result += task.kind + '","' 
+                    result += kind.getColor() + '","' 
                     result += timestring + '","' 
                     result += duration + '","' 
                     result += this.datestr + '"' + ")'"
                 result += "onmouseleave='mouseleaveTask(" 
                     result += '"'+ this.datestr + '"'+ ")'" 
                 result += ">"
+            //result += Day.diffToPercent(diff)
             result += "</div>"
             curr_time = end
         }
@@ -312,9 +243,9 @@ class Day{
     }
 }
 
-function mouseenterTask(name, kind, timestring, duration, divid) {
+function mouseenterTask(name, color, timestring, duration, divid) {
     var namediv = document.getElementById(divid)
-    var entry =  "<div class='text-" + (kind==="task"?"success":"danger") + "'>"
+    var entry =  "<div class='text-" + color + "'>"
     entry += "<strong>" + name + "</strong></div>"
     entry += "<div><strong>Time:</strong> " + timestring + "</div>"
     entry += "<div><strong>Duration:</strong> " + duration + "</div>"
