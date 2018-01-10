@@ -44,18 +44,25 @@ function load() {
 //  MAIN CONTROL
 
 function buttonPress(kind) {
+    // return if another instance is ongoing
+    if(checkLock()) {
+        alert("Another instance of Productivity is still running")
+        return
+    }
     if(!timer_ongoing) {
         var title = document.getElementById(kind + "name").value
         startTimer()    // sets timer_ongoing
         current_task = new Task(title, kind, start_time)
         current_task.begin()
         changeFavicon(favicons[TaskKind.getByName(kind).getColor()])
+        setLock()
     } else {
         clearTimer()    // clears timer_ongoing as well
         current_task.end()
         saveTask(current_task)
         current_task = null
         changeFavicon("favicon.ico")
+        clearLock()
     }
     displayRecent(amount_recent_to_show)
 }
@@ -152,10 +159,17 @@ function displayRecent(amt) {
     for (var i = sessions.length-1; i > -1; i--) {
         var day = sessions[i]
         Object.setPrototypeOf(day, Day.prototype)  
-        var entry = '<div class="card card-body bg-light">'
+        var entry = '<div class="card card-body bg-light"'
+        entry += ' onmouseover="setVisibility(' 
+        entry += "'total" + day.datestr + "',true)" + '" '
+        entry += ' onmouseout="setVisibility('
+        entry += "'total" + day.datestr + "',false)" + '">'
         entry += '<h3>' + toPrettyDate(day.datestr) + '</h3>'
         entry += day.createProgressBar()
-        entry += '<div id="' + day.datestr + '"> </div>'
+        entry += '<div id="' + day.datestr + '">'
+        entry += '</div>'
+        entry += '<div style="display:none" id="total' + day.datestr
+        entry += '">' + day.displayTotalTimes() + '</div>'
         entry += '</div>'
         
         recentdays.innerHTML += entry
@@ -204,8 +218,6 @@ class Day{
         for (var i = 0; i < this.tasks.length; i++) {
             var task = this.tasks[i]
             var kind = TaskKind.getByName(task.kind)
-            console.log(kind)
-            console.log(kind.getColor())
             // get the time from curr_time to task time
             var start = new Date(task.start_time)
             var diff = start - curr_time
@@ -231,7 +243,6 @@ class Day{
                 result += "onmouseleave='mouseleaveTask(" 
                     result += '"'+ this.datestr + '"'+ ")'" 
                 result += ">"
-            //result += Day.diffToPercent(diff)
             result += "</div>"
             curr_time = end
         }
@@ -241,7 +252,30 @@ class Day{
         result += "</div>"
         return result
     }
+    
+    displayTotalTimes() {
+        var result = "<strong>Totals: </strong>"
+        var kinds = TaskKind.getKinds()
+        var totals = {}
+        // iterate over all tasks
+        for (var i = 0; i < this.tasks.length; i++) {
+            var task = this.tasks[i]
+            if (!totals[task.kind]) { totals[task.kind] = 0 }
+            totals[task.kind] += task.duration
+        }
+        console.log(totals)
+        // create output html
+        for (var kindname in totals) {
+            var duration = totals[kindname]
+            var color = TaskKind.getByName(kindname).getColor()
+            result += " <span class='text-" + color + "'>"
+            result += formatTime(duration) + "</span> | "
+        }
+        return result
+    }
 }
+//==========================================================================
+//  MOUSEOVERS
 
 function mouseenterTask(name, color, timestring, duration, divid) {
     var namediv = document.getElementById(divid)
@@ -257,3 +291,22 @@ function mouseleaveTask(divid) {
     namediv.innerHTML = ""
 }
 
+//==========================================================================
+//  LOCKS
+
+function checkLock() {
+    var lock = localStorage.getItem("islocked")
+    if(lock === null || lock === "no" || (lock === "yes" && current_task)) {
+        return false
+    } else {
+        return true
+    }
+}
+
+function setLock() {
+    localStorage.setItem("islocked","yes")
+}
+
+function clearLock() {
+    localStorage.setItem("islocked","no")
+}
