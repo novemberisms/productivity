@@ -1,6 +1,8 @@
 function newDate(datestr) {
     var d = new Date(datestr)
-    d.setTime( d.getTime() + d.getTimezoneOffset()*60*1000 );
+    if (d.toLocaleTimeString() !== "12:00:00 AM") {
+        d.setTime( d.getTime() + d.getTimezoneOffset()*60*1000 );
+    }
     return d
 }
 
